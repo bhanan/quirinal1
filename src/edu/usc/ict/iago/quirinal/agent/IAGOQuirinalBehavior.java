@@ -190,15 +190,66 @@ public class IAGOQuirinalBehavior extends IAGOCoreBehavior implements BehaviorPo
 
 	@Override
 	protected Offer getFinalOffer(History history) {
-		// TODO Auto-generated method stub
-		return null;
+		Offer propose = new Offer(game.getNumIssues());
+		for(int issue = 0; issue < game.getNumIssues(); issue++)
+			propose.setItem(issue,  allocated.getItem(issue));
+		Ordering playerPref = opponentModel.getTopOrderings(1).get(0);
+		
+		ArrayList<Integer> vhPref = utils.getVHOrdering();
+		int[] free = GetFree();
+		
+		//find top deals
+		int topPlay = -1;
+		int topVH = -1;
+		int max = game.getNumIssues() + 1;
+		for(int i  = 0; i < game.getNumIssues(); i++)
+			if(free[i] > 0 && playerPref.get(i) < max)
+			{
+				topPlay = i;
+				max = playerPref.get(i);
+			}
+		max = game.getNumIssues() + 1;
+		for(int i  = 0; i < game.getNumIssues(); i++)
+			if(free[i] > 0 && vhPref.get(i) < max)
+			{
+				topVH = i;
+				max = vhPref.get(i);
+			}
+		
+
+		if (topPlay == -1 && topVH == -1) //we're already at a full offer, but need to try something different
+		{
+			//just repeat and keep allocated
+		}			
+		else if(topPlay == topVH)//we're wanting the same thing			
+		{
+			if(free[topPlay] >= 2)
+				//for even free[topPlay]
+				if (((free[topPlay]/2)*2) == free[topPlay])
+					propose.setItem(topPlay, new int[] {allocated.getItem(topPlay)[0] + free[topPlay]/2, 0, allocated.getItem(topPlay)[2] + free[topPlay]/2});//split evenly
+				//for odd free[topPlay]
+				else
+					propose.setItem(topPlay, new int[] {allocated.getItem(topPlay)[0] + free[topPlay]/2, 1, allocated.getItem(topPlay)[2] + free[topPlay]/2});//split evenly
+			else
+				propose.setItem(topPlay, new int[] {allocated.getItem(topPlay)[0], free[topPlay] - 1, allocated.getItem(topPlay)[2] + 1});//give give
+		}
+		else
+		{
+			int max_avilable=free[topPlay];
+			propose.setItem(topPlay, new int[] {allocated.getItem(topPlay)[0], 0, allocated.getItem(topPlay)[2] + max_avilable});
+			max_avilable=free[topVH];
+			propose.setItem(topVH, new int[] {allocated.getItem(topVH)[0] + max_avilable,  0, allocated.getItem(topVH)[2]});
+		}
+		
+		
+		return propose;
 	}
 
 
 	@Override
 	protected Offer getTimingOffer(History history) {
-		// TODO Auto-generated method stub
-		return null;
+		Offer pp = getNextOffer(history);
+		return pp;
 	}
 
 
